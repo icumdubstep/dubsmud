@@ -9,7 +9,15 @@ class Player:
 	self.client = client
 	self.handle = "" # blank
 	self.status = 0 # login state
-
+	self.admin = False #admin checker
+	
+class Admin(Player):
+    def Player.__init__(self, client):
+        self.client = client
+        self.handle = "" # blank
+        self.status = 0
+        self.passwd = "Princess Celestia" #default password, Prompt for change on login
+		self.password = ""
 def broadcast(msg):
     """
     Send msg to every client.
@@ -34,8 +42,15 @@ def process(player):
     msg = player.client.get_command()
     if player.status == 0:
 	player.name = msg
-	player.client.send("\nType in 'commands' for a list of available commands.\n")
+		player.client.send("\nType in 'commands' for a list of available commands.\n")
         player.status = 1
+
+	elif player.status == 1 and player.name == "Admin":
+	player.client.send("Hello Admin.  What is your password?")
+	player.password = msg
+		player.client.send("\nType in 'commands' for a list of available commands.\n")
+		player.status = 2
+		
     else:
         cmd = msg.lower()
         ## bye = disconnect
@@ -43,11 +58,19 @@ def process(player):
             player.client.active = False
         ## shutdown == stop the server
         elif cmd == 'shutdown':
-            SERVER_RUN = False
+            if player.admin == True:
+                SERVER_RUN = False #admin tester
+            else:
+                player.client.send("Permission not granted")
 	elif cmd[:4] == 'chat':
 	    broadcast("%s : %s\n" % (player.name, msg[4:]))
+	elif cmd == 'admin':
+		if player.password == player.passwd:
+			player.admin = True
+		else
+			player.client.send("Sorry, permission not granted.")
 	elif cmd == 'commands':
-	    player.client.send("Available Commands:\nbye\nshutdown\nchat\ncommands\n")
+	    player.client.send("Available Commands:\nbye\nshutdown\nadmin\nchat\ncommands\n")
 def on_disconnect(client):
     """
     Sample on_disconnect function.
