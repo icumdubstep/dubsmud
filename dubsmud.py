@@ -1,22 +1,26 @@
+#
+# dubsmud.py - Main program server loop
+#
+
+#imports
+
 from miniboa import TelnetServer
+from dm_global import *
+import dm_commands
 
+
+# Length of time in seconds until an idle client is disconnected
 IDLE_TIMEOUT = 300
-PLAYER_LIST = []
-SERVER_RUN = True
 
-class Player:
-    def __init__(self, client):
+class Player: # class for all connecting users.
+    def __init__(self, client, last_channel = "default"):
+	self.last_channel = last_channel
 	self.client = client
 	self.handle = "" # blank
 	self.status = 0 # login state
 	self.admin = False #admin checker
 
-def broadcast(msg):
-    """
-    Send msg to every client.
-    """
-    for player in PLAYER_LIST:
-        player.client.send(msg)
+
 
 def process_clients():
     """
@@ -39,40 +43,31 @@ def process(player):
 	    player.client.send("Hello Admin.  What is your password?\n")
 	    player.status = 1
 	else:
-	    player.client.send("\nType in 'commands' for a list of available commands.\n")
+	    player.client.send("\nType in 'commands' for a list of available commands.\n> ")
 	    player.status = 2
+	CHAT_MANAGER.add_player_to_channel(player)
     elif player.status == 1:
 	if msg == "Princess Celestia":
 	    player.admin = True
-	    player.client.send("\nType in 'commands' for a list of available commands.\n")
+	    player.client.send("\nType in 'commands' for a list of available commands.\n> ")
 	    player.status = 2
 	else:
 	    player.client.send("Access Denied. Try again.")
 	    player.status = 0
     else:
-        cmd = msg.lower()
-        ## bye = disconnect
-        if cmd == 'bye':
-            player.client.active = False
-        ## shutdown == stop the server
-        elif cmd == 'shutdown':
-            if player.admin:
-                SERVER_RUN = False #admin tester
-            else:
-                player.client.send("Permission not granted\n")
-	elif cmd[:4] == 'chat':
-	    broadcast("%s : %s\n" % (player.name, msg[4:]))
-	elif cmd == 'commands':
-	    player.client.send("Available Commands:\nbye\nshutdown\nchat\ncommands\n")
+	dm_commands.parse_command(player, msg)
+	
 def on_disconnect(client):
     """
     Sample on_disconnect function.
     Handles lost connections.
     """
     print "-- Lost connection to %s" % client.addrport()
+    
     for player in PLAYER_LIST:
 	if player.client == client:
         	PLAYER_LIST.remove(player)
+		CHAT_MANAGER.remove_player_from_all_channels(player)
 def on_connect(client):
     """
     Handles new connections.
@@ -82,6 +77,7 @@ def on_connect(client):
     PLAYER_LIST.append( Player(client) )
     client.send("Welcome to the DubsMud BBS! \n\n")
     client.send("What is your name? ")
+
 def kick_idle():
     """
     Looks for idle clients and disconnects them by setting active to False.
@@ -89,7 +85,7 @@ def kick_idle():
     ## Who hasn't been typing?
     for player in PLAYER_LIST:
         if player.client.idle() > IDLE_TIMEOUT:
-            print('-- Kicking idle lobby client from %s' % client.addrport())
+            print('-- Kicking idle lobby client from %s' % player.client.addrport())
             player.client.active = False
 if __name__ == '__main__':
 
@@ -102,7 +98,7 @@ if __name__ == '__main__':
         on_disconnect=on_disconnect,
         timeout = .05
         )
-
+    
     print(">> Listening for connections on port %d.  CTRL-C to break."
         % telnet_server.port)
 
