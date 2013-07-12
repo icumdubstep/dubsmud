@@ -9,6 +9,8 @@ class Player:
 	self.client = client
 	self.handle = "" # blank
 	self.status = 0 # login state
+	self.admin = False # admin
+    
 
 def broadcast(msg):
     """
@@ -31,11 +33,18 @@ def process(player):
     take commands
     """
     global SERVER_RUN
+    
     msg = player.client.get_command()
+    
+    
     if player.status == 0:
 	player.name = msg
 	player.client.send("\nType in 'commands' for a list of available commands.\n")
         player.status = 1
+        if player.password == "Kol" :
+            player.admin = True
+            
+            
     else:
         cmd = msg.lower()
         ## bye = disconnect
@@ -43,11 +52,17 @@ def process(player):
             player.client.active = False
         ## shutdown == stop the server
         elif cmd == 'shutdown':
-            SERVER_RUN = False
+            if player.admin == True :
+                SERVER_RUN = False # admin /b/test
+            else:
+                 player.client.send("Permission not granted")
+    
 	elif cmd[:4] == 'chat':
 	    broadcast("%s : %s\n" % (player.name, msg[4:]))
+	elif cmd == 'blaze':
+            broadcast("%s : %s\n" % (player.name, "reminds everyone to blaze daily")) # JUSTBLLLAZE
 	elif cmd == 'commands':
-	    player.client.send("Available Commands:\nbye\nshutdown\nchat\ncommands\n")
+	    player.client.send("Available Commands:\nblaze\nbye\nshutdown\nchat\ncommands\n")
 def on_disconnect(client):
     """
     Sample on_disconnect function.
@@ -70,7 +85,7 @@ def kick_idle():
     """
     Looks for idle clients and disconnects them by setting active to False.
     """
-    ## Who hasn't been typing?
+    ## Who hasn't been blazin?
     for player in PLAYER_LIST:
         if player.client.idle() > IDLE_TIMEOUT:
             print('-- Kicking idle lobby client from %s' % client.addrport())
