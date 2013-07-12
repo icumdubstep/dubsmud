@@ -9,6 +9,7 @@ class Player:
 	self.client = client
 	self.handle = "" # blank
 	self.status = 0 # login state
+	self.admin = False #admin checker
 
 def broadcast(msg):
     """
@@ -33,9 +34,21 @@ def process(player):
     global SERVER_RUN
     msg = player.client.get_command()
     if player.status == 0:
-	player.name = msg
-	player.client.send("\nType in 'commands' for a list of available commands.\n")
-        player.status = 1
+	player.name = msg      
+	if player.name == "Admin":
+	    player.client.send("Hello Admin.  What is your password?\n")
+	    player.status = 1
+	else:
+	    player.client.send("\nType in 'commands' for a list of available commands.\n")
+	    player.status = 2
+    elif player.status == 1:
+	if msg == "Princess Celestia":
+	    player.admin = True
+	    player.client.send("\nType in 'commands' for a list of available commands.\n")
+	    player.status = 2
+	else:
+	    player.client.send("Access Denied. Try again.")
+	    player.status = 0
     else:
         cmd = msg.lower()
         ## bye = disconnect
@@ -43,7 +56,10 @@ def process(player):
             player.client.active = False
         ## shutdown == stop the server
         elif cmd == 'shutdown':
-            SERVER_RUN = False
+            if player.admin:
+                SERVER_RUN = False #admin tester
+            else:
+                player.client.send("Permission not granted\n")
 	elif cmd[:4] == 'chat':
 	    broadcast("%s : %s\n" % (player.name, msg[4:]))
 	elif cmd == 'commands':
