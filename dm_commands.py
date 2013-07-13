@@ -159,7 +159,7 @@ def handle_chat_command(player, msg, me=False):
 		for s in target_channels_dirty:
 			target_channels.append(s[1:]) # clean up the preceding '@'s
 		# Remove channels from the message
-		chat_message = re.sub(r' @\w+', '', msg, flags=re.IGNORECASE)
+		chat_message = re.sub(r' @\w+', '', msg)
 	else:
 		target_channels = [player.last_channel]
 		chat_message = msg
