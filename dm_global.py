@@ -12,11 +12,12 @@ CHAT_MANAGER = dm_chat.ChatManager()
 # Run condition for server loop
 SERVER_RUN = True
 
+RULES = ""
 # global functions
 
 def broadcast(msg):
-    """
-    Send msg to every client.
-    """
-    for player in PLAYER_LIST:
-        player.client.send(msg)
+	"""
+	Send msg to every client.
+	"""
+	for player in PLAYER_LIST:
+		player.client.send(msg)
