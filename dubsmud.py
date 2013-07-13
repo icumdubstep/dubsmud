@@ -48,6 +48,7 @@ def process(player):
 		if player.name == "Admin":
 			player.client.send("Hello Admin.  What is your password?\n")
 			player.status = 1
+			player.client.password_mode_on()
 		else:
 			CHAT_MANAGER.add_player_to_channel(player)
 			
@@ -65,6 +66,7 @@ def process(player):
 		else:
 			player.client.send("Access Denied. Try again.")
 			player.status = 0
+		player.client.password_mode_off()
 	else:
 		dm_commands.parse_command(player, msg)
 	

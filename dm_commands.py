@@ -161,7 +161,8 @@ def handle_chat_command(player, msg, me=False):
 		# Remove channels from the message
 		chat_message = re.sub(r' @\w+', '', msg, flags=re.IGNORECASE)
 	else:
-		target_channels = [player.last_channel.name]
+		target_channels = [player.last_channel]
+		chat_message = msg
 	# Clean up whitespace
 	chat_message = chat_message.strip()
 	CHAT_MANAGER.handle_message(chat_message, player, target_channels, me)

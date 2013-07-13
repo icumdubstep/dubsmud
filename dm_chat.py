@@ -75,7 +75,7 @@ class ChatManager:
 						channel.broadcast("*%s %s" % (player.name, msg))
 					else:
 						channel.broadcast("%s : %s" % (player.name, msg))
-					player.last_channel = channel
+					player.last_channel = channel.name
 				missing_channels.remove(channel.name)
 		for channel in missing_channels:
 			return "\nChannel {0} not found".format(channel)
