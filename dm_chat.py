@@ -8,13 +8,14 @@ import dm_global
 class ChatChannel: # Class for a specific channel for the chat.
 	def __init__(self, close_on_vacant=True, name="System"):
 		self.name = name
+		self.color = "\033[38;5;1m"
 		self.readonly = False
 		self.topic = "Topic not set"
 		self.connected_players = []
 		self.close_on_vacant = close_on_vacant
 	def broadcast(self, msg):
 		for player in self.connected_players:
-			player.send_message("%s > %s" % (self.name, msg))
+			player.send_message("%s > %s" % (self.get_display_name(), msg))
 	def add_player(self, player):
 		if player in self.connected_players:
 			player.send_message("Already connected to that channel")
@@ -33,6 +34,8 @@ class ChatChannel: # Class for a specific channel for the chat.
 		else:
 			player.send_message("Not connected to {0}".format(self.name))
 		return False
+	def get_display_name(self):
+		return self.color + self.name + "\033[38;5;15m"
 class ChatManager:
 	def __init__(self):
 		self.channels = [ChatChannel(False), ChatChannel(False, "default")]

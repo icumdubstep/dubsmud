@@ -22,12 +22,17 @@ class Player: # class for all connecting users.
 		self.whois = "" #blank
 		self.ircmode = False
 		self.messages = []
-		self.ansi_enabled = False
+		self.ansi_ui_enabled = False # Flag for the experimental ANSI UI
+		self.ansi_color_enabled = True # ANSI colors. Works with pretty much every client, but can be disabled by the user.
+		self.colors = []
 	# With one exception, this is all you are going to use to send messages to the player.
 	def send_message(self, msg):
-		if not self.ansi_enabled:
+		if not self.ansi_ui_enabled:
 			self.client.send(msg + "\n")
 			return
+
+		# Experimental ANSI stuff. Use at your own risk of confusion.
+		
 		# If we have newline characters, we use our own method of dealing with them.
 		if '\n' in msg:
 			messages = msg.split('\n')
@@ -52,10 +57,10 @@ class Player: # class for all connecting users.
 			x = x - 1
 		self.client.send("\x1b[u") # Restore the cursor position
 	def init_screen(self):
-		if self.ansi_enabled:
+		if self.ansi_ui_enabled:
 			self.client.send("\x1b[2J\n") # Clear the screen and add newline
 			self.send_message("Login Successful")
-		self.client.send("%s>" % self.name)
+		self.client.send("%s>" % self.name)	
 def process_clients():
 	"""
 	Check each client, if client.cmd_ready == True then there is a line of
