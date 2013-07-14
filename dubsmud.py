@@ -22,8 +22,12 @@ class Player: # class for all connecting users.
 		self.whois = "" #blank
 		self.ircmode = False
 		self.messages = []
+		self.ansi_enabled = False
 	# With one exception, this is all you are going to use to send messages to the player.
 	def send_message(self, msg):
+		if not self.ansi_enabled:
+			self.client.send(msg + /n)
+			return
 		# If we have newline characters, we use our own method of dealing with them.
 		if '\n' in msg:
 			messages = msg.split('\n')
@@ -48,7 +52,9 @@ class Player: # class for all connecting users.
 			x = x - 1
 		self.client.send("\x1b[u") # Restore the cursor position
 	def init_screen(self):
-		self.client.send("\x1b[2J\n") # Clear the screen and add newline
+		if self.ansi_enabled:
+			self.client.send("\x1b[2J\n") # Clear the screen and add newline
+			self.send_message("Login Successful")
 		self.client.send("%s>" % self.name)
 def process_clients():
 	"""
@@ -78,19 +84,21 @@ def process(player):
 			player.status = 1
 			player.client.password_mode_on()
 		else:
-			player.init_screen()
+			
 			CHAT_MANAGER.add_player_to_channel(player)
 			CHAT_MANAGER.add_player_to_channel(player, "default")
 			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
+			player.init_screen()
 	elif player.status == 1:
 		if msg == "Princess Celestia":
-			player.init_screen()
+			
 			CHAT_MANAGER.add_player_to_channel(player)
 			CHAT_MANAGER.add_player_to_channel(player, "default")
 			player.admin = True
 			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
+			player.init_screen()
 			
 		else:
 			player.client.send("Access Denied. Try again.")
