@@ -21,11 +21,39 @@ class Player: # class for all connecting users.
 		self.admin = False #admin checker
 		self.whois = "" #blank
 		self.ircmode = False
-
+		self.messages = []
+	# With one exception, this is all you are going to use to send messages to the player.
+	def send_message(self, msg):
+		# If we have newline characters, we use our own method of dealing with them.
+		if '\n' in msg:
+			messages = msg.split('\n')
+			for message in messages:
+				self.send_message(message) # Recursive call that takes care of newline characters
+				
+			return
+		self.client.send("\x1b[s") # Save the cursor position
+		self.messages.append(msg) # Add the message
+		# Keep things tidy by adding extra lines for word wrap
+		extra_lines = int(len(msg) / 60)
+		self.messages.extend([""] * extra_lines)
+		x = len(self.messages) - 1
+		while x >=100:
+			self.messages.pop(0) # We want to keep a cap on the number of messages we keep track of.
+			x = x - 1
+		while x > 0:
+			self.client.send("\x1b[1F") # Go to previous line
+			self.client.send("\x1b[2K") # clear it
+			self.client.send("\x1b[0G") # move the cursor to column 0
+			self.client.send(self.messages[x]) # send the message
+			x = x - 1
+		self.client.send("\x1b[u") # Restore the cursor position
+	def init_screen(self):
+		self.client.send("\x1b[2J\n") # Clear the screen and add newline
+		self.client.send("%s>" % self.name)
 def process_clients():
 	"""
 	Check each client, if client.cmd_ready == True then there is a line of
-	input available via client.get_command().
+	input available via client.get_command()
 	"""
 	for player in PLAYER_LIST:
 		if player.client.active and player.client.cmd_ready:
@@ -50,17 +78,18 @@ def process(player):
 			player.status = 1
 			player.client.password_mode_on()
 		else:
+			player.init_screen()
 			CHAT_MANAGER.add_player_to_channel(player)
-			
-			player.client.send("\nType in 'commands' for a list of available commands.\n> ")
+			CHAT_MANAGER.add_player_to_channel(player, "default")
+			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
-			
 	elif player.status == 1:
 		if msg == "Princess Celestia":
+			player.init_screen()
 			CHAT_MANAGER.add_player_to_channel(player)
 			CHAT_MANAGER.add_player_to_channel(player, "default")
 			player.admin = True
-			player.client.send("\nType in 'commands' for a list of available commands.\n> ")
+			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
 			
 		else:

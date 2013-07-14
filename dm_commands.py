@@ -7,7 +7,7 @@ import dm_utils
 import re
 
 def parse_command(player, msg):
-	
+	player.send_message("%s>%s\n" % (player.name, msg))
 	if player.ircmode:
 		if msg[0] == '/':
 			msg = msg[1:]
@@ -29,53 +29,53 @@ def parse_command(player, msg):
         	player.client.active = False
 	elif cmd == 'nick':
 		if args == "":
-			player.client.send("Enter a new name")
+			player.send_message("Enter a new name")
 	    	else:
 			broadcast("%s shall now be known as %s" % (player.name, args))
 			player.name = args
 	elif cmd == 'iam':
 		if args == "":
-			player.client.send("Enter a new whois")
+			player.send_message("Enter a new whois")
 	    	else:
 			player.whois = args
-			player.client.send("Saved")
+			player.send_message("Saved")
         # Admin commands:
 
         elif cmd == 'shutdown':
         	if player.admin:
                 	raise dm_utils.ExitSignal(0)
         	else:
-                	player.client.send("Permission not granted")
+                	player.send_message("Permission not granted")
 	elif cmd == 'addch':
 		if player.admin:
 			if args == "":
-				player.client.send("Enter a name for your channel")
+				player.send_message("Enter a name for your channel")
 			else:
 				CHAT_MANAGER.add_channel(args)
 				broadcast("New channel \"%s\" created." % args)
 		else:
-			player.client.send("Permission not granted")
+			player.send_message("Permission not granted")
 	elif cmd == 'broadcast':
 		if player.admin:
 			if args == "":
-				player.client.send("Enter a message to broadcast")
+				player.send_message("Enter a message to broadcast")
 			else:
 				broadcast(args)
 		else:
-			player.client.send("Permission not granted")
+			player.send_message("Permission not granted")
 	# Chat commands
 	elif cmd == 'ircmode':
 		player.ircmode = not player.ircmode
 		if player.ircmode:
-			player.client.send("IRC mode is ON")
+			player.send_message("IRC mode is ON")
 		else:
-			player.client.send("IRC mode is OFF")
+			player.send_message("IRC mode is OFF")
 	elif cmd == 'chat':
 		if args == "" or ('@' in args and ' ' not in args):
 			if player.ircmode:
-				player.client.send("Enter a message. For example:\n    White Power!\nTo direct a message to a particular channel, type @ and the channel's name before the message. For example\n    @snoopdogg Blaze it erryday\n    @bronies @furries ur gay kill urself")
+				player.send_message("Enter a message. For example:\n    White Power!\nTo direct a message to a particular channel, type @ and the channel's name before the message. For example\n    @snoopdogg Blaze it erryday\n    @bronies @furries ur gay kill urself")
 			else:
-				player.client.send("Enter a message. For example:\n    chat White Power!\nTo direct a message to a particular channel, type @ and the channel's name before the message. For example\n    chat @snoopdogg Blaze it erryday\n    chat @bronies @furries ur gay kill urself")
+				player.send_message("Enter a message. For example:\n    chat White Power!\nTo direct a message to a particular channel, type @ and the channel's name before the message. For example\n    chat @snoopdogg Blaze it erryday\n    chat @bronies @furries ur gay kill urself")
 	    	else:
 			handle_chat_command(player, msg[4:], False)
 			
@@ -84,28 +84,28 @@ def parse_command(player, msg):
 		handle_chat_command(player, msg[2:], True)
 	elif cmd == 'join':
 	    	if args == "":
-			player.client.send("Enter a channel name")
+			player.send_message("Enter a channel name")
 	    	else:
 			CHAT_MANAGER.add_player_to_channel(player, args)
 	elif cmd == 'part':
 	    	if args == "":
-			player.client.send("Enter a channel name")
+			player.send_message("Enter a channel name")
 	    	else:
 			if args == "System":
-				player.client.send("Cannot disconnect from System.")
+				player.send_message("Cannot disconnect from System.")
 			else:
 				CHAT_MANAGER.remove_player_from_channel(player, args)
 	elif cmd == 'whois':
 		if args == "":
-			player.client.send("Enter a name\n")
+			player.send_message("Enter a name\n")
 	    	else:
 			found = False
 			for target_player in PLAYER_LIST:
 				if target_player.name == args:
 					found = True
-					player.client.send(target_player.whois)
+					player.send_message(target_player.whois)
 			if not found:
-				player.client.send("User not found")
+				player.send_message("User not found")
 	elif cmd == 'topic':
 		if args == "":
 			CHAT_MANAGER.display_topic(player, player.last_channel)
@@ -119,35 +119,35 @@ def parse_command(player, msg):
 				CHAT_MANAGER.change_topic(player, player.last_channel, args)
 	elif cmd == 'msg':
 		if args == "":
-			player.client.send("Enter a name and a message. For example:\n    msg pinkie_pie ur so sexi")
+			player.send_message("Enter a name and a message. For example:\n    msg pinkie_pie ur so sexi")
 	    	else:
 			if ' ' in args:
 				name = args[:msg.index(' ') + 1]
 				msg = args[msg.index(' ') + 1:]
 			else:
-				player.client.send("Enter a message. For example:\n    msg rarity ur so pretti")
+				player.send_message("Enter a message. For example:\n    msg rarity ur so pretti")
 			found = False
 			for target_player in PLAYER_LIST:
 				if target_player.name == name:
-					target_player.client.send("%s sends you a message:\n%s\n" % (player.name, msg))
-					player.client.send("Message Delivered")
+					target_player.send_message("%s sends you a message:\n%s\n" % (player.name, msg))
+					player.send_message("Message Delivered")
 					found = True
 			if not found:
-				player.client.send("User %s not found" % name)
+				player.send_message("User %s not found" % name)
 	elif cmd == 'listchannels':
-		player.client.send(CHAT_MANAGER.get_channels())
+		player.send_message(CHAT_MANAGER.get_channels())
 	# Help commands
 
 	elif cmd == 'commands':
-		player.client.send("Available Commands:\n\nquit\n*shutdown\n*broadcast\nchat\nme\nlistchannels\ncommands\n*addch\njoin\npart\nrules\nwhois\niam\nhelp\nmsg\nnick\n\nCommands are not case-sensitive\nStarred commands are admin-only\nTo recieve more detailed information about a command, type in \"command\" and the command. For example: \"help chat\"")
+		player.send_message("Available Commands:\n\nquit\n*shutdown\n*broadcast\nchat\nme\nlistchannels\ncommands\n*addch\njoin\npart\nrules\nwhois\niam\nhelp\nmsg\nnick\n\nCommands are not case-sensitive\nStarred commands are admin-only\nTo recieve more detailed information about a command, type in \"command\" and the command. For example: \"help chat\"")
 	elif cmd == 'rules':
-		player.client.send(RULES)
+		player.send_message(RULES)
 	elif cmd == 'help':
-		player.client.send(get_help(player, args))
+		player.send_message(get_help(player, args))
 	# If all else fails....
 	else:
-		player.client.send("Not a valid command")
-	player.client.send("\n> ")
+		player.send_message("Not a valid command")
+	player.client.send("%s>" % player.name)
 
 
 

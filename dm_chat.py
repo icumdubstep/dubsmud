@@ -14,24 +14,24 @@ class ChatChannel: # Class for a specific channel for the chat.
 		self.close_on_vacant = close_on_vacant
 	def broadcast(self, msg):
 		for player in self.connected_players:
-			player.client.send("%s > %s\n" % (self.name, msg))
+			player.send_message("%s > %s" % (self.name, msg))
 	def add_player(self, player):
 		if player in self.connected_players:
-			player.client.send("Already connected to that channel")
+			player.send_message("Already connected to that channel")
 		else:
 			self.broadcast("%s connected to %s" % (player.name, self.name) )
 			self.connected_players.append(player)
-			player.client.send("Connected to {0}".format(self.name))
+			player.send_message("Connected to {0}".format(self.name))
 	#Removes a player from the list. If the close_on_vacant flag is True, and the channel is vacant, the channel will return True. ChatManager will then close the channel
 	def remove_player(self, player):
 		if player in self.connected_players:
 			self.connected_players.remove(player)
 			self.broadcast("%s disconnected from %s" % (player.name, self.name) )
-			player.client.send("Disconnected from {0}".format(self.name))
+			player.send_message("Disconnected from {0}".format(self.name))
 			if self.close_on_vacant and not self.connected_players:
 				return True
 		else:
-			player.client.send("Not connected to {0}".format(self.name))
+			player.send_message("Not connected to {0}".format(self.name))
 		return False
 class ChatManager:
 	def __init__(self):
@@ -53,7 +53,7 @@ class ChatManager:
 				channel_found = True
 				
 		if not channel_found:
-			player.client.send("Channel {0} not found".format(target_channel))
+			player.send_message("Channel {0} not found".format(target_channel))
 	def change_topic(self, player, target_channel, topic):
 		channel_found = False
 		for channel in self.channels:
@@ -63,13 +63,13 @@ class ChatManager:
 				player.last_channel = target_channel
 				channel_found = True
 		if not channel_found:
-			player.client.send("Channel {0} not found".format(target_channel))
+			player.send_message("Channel {0} not found".format(target_channel))
 	def handle_message(self, msg, player, target_channels=[], me=False):
 		missing_channels = target_channels
 		for channel in self.channels:
 			if channel.name in target_channels:
 				if channel.readonly and not player.admin:
-					player.client.send("You are not allowed to send messages to this channel.")
+					player.send_message("You are not allowed to send messages to this channel.")
 				else: 
 					if me:
 						channel.broadcast("*%s %s" % (player.name, msg))
@@ -78,13 +78,13 @@ class ChatManager:
 					player.last_channel = channel.name
 				missing_channels.remove(channel.name)
 		for channel in missing_channels:
-			return "\nChannel {0} not found".format(channel)
+			return "Channel {0} not found".format(channel)
 	def add_player_to_channel(self, player, channel_name="System"):
 		for channel in self.channels:
 			if channel.name == channel_name:
 				channel.add_player(player)
 				return
-		player.client.send("Channel %s not found.\n" % channel_name)
+		player.send_message("Channel %s not found." % channel_name)
 	def remove_player_from_channel(self, player, channel_name="System"):
 		for channel in self.channels:
 			if channel.name == channel_name:
@@ -92,11 +92,11 @@ class ChatManager:
 					self.channels.remove(channel)
 					dm_global.broadcast("Channel %s is vacant, and now will be closed." % channel.name)
 				return
-		player.client.send("Channel %s not found.\n" % channel_name)
+		player.send_message("Channel %s not found." % channel_name)
 	def get_channels(self):
 		s = "List of all channels:"
 		for channel in self.channels:
-			s += "\n" + channel.name
+			s += "" + channel.name
 		return s
 	def remove_player_from_all_channels(self, player):
 		for channel in self.channels:
