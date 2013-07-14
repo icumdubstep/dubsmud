@@ -26,7 +26,7 @@ class Player: # class for all connecting users.
 	# With one exception, this is all you are going to use to send messages to the player.
 	def send_message(self, msg):
 		if not self.ansi_enabled:
-			self.client.send(msg + /n)
+			self.client.send(msg + "\n")
 			return
 		# If we have newline characters, we use our own method of dealing with them.
 		if '\n' in msg:
