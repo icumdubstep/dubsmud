@@ -18,13 +18,13 @@ class Player: # class for all connecting users.
 		self.client = client
 		self.name = "" # blank
 		self.status = 0 # login state
-		self.admin = False #admin checker
+		self.permissions = ["ALL"] # Permission flags
 		self.whois = "" #blank
 		self.ircmode = False
 		self.messages = []
 		self.ansi_ui_enabled = False # Flag for the experimental ANSI UI
 		self.ansi_color_enabled = True # ANSI colors. Works with pretty much every client, but can be disabled by the user.
-		self.colors = []
+		
 	# With one exception, this is all you are going to use to send messages to the player.
 	def send_message(self, msg):
 		if not self.ansi_ui_enabled:
@@ -100,7 +100,7 @@ def process(player):
 			
 			CHAT_MANAGER.add_player_to_channel(player)
 			CHAT_MANAGER.add_player_to_channel(player, "default")
-			player.admin = True
+			player.permissions.append("ADMINISTRATOR")
 			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
 			player.init_screen()

@@ -8,14 +8,17 @@ import dm_global
 class ChatChannel: # Class for a specific channel for the chat.
 	def __init__(self, close_on_vacant=True, name="System"):
 		self.name = name
-		self.color = "\x1b[31;1m"
 		self.readonly = False
 		self.topic = "Topic not set"
 		self.connected_players = []
 		self.close_on_vacant = close_on_vacant
+		self.chat_color = ""
 	def broadcast(self, msg):
 		for player in self.connected_players:
-			player.send_message("%s > %s" % (self.get_display_name(), msg))
+			if player.ansi_color_enabled:
+				player.send_message("{0}{1} > {2}{3}".format(self.chat_color, self.name, msg, dm_global.CLEAR_FORMATTING))
+			else:
+				player.send_message("{0} > {1}".format((self.name, msg)))
 	def add_player(self, player):
 		if player in self.connected_players:
 			player.send_message("Already connected to that channel")
@@ -34,8 +37,7 @@ class ChatChannel: # Class for a specific channel for the chat.
 		else:
 			player.send_message("Not connected to {0}".format(self.name))
 		return False
-	def get_display_name(self):
-		return self.color + self.name + "\x1b[37;1m"
+
 class ChatManager:
 	def __init__(self):
 		self.channels = {'System': ChatChannel(False), 'default': ChatChannel(False, "default")}
@@ -56,14 +58,14 @@ class ChatManager:
 	def change_topic(self, player, channel, topic):
 		if channel in self.channels:
 			self.channels[channel].topic = topic
-			self.channels[channel].broadcast("*%s has changed the topic to \"%s\"" % (player.name, msg[msg.index(' ') + 1:]))
+			self.channels[channel].broadcast("*%s has changed the topic to \"%s\"" % (player.name, topic))
 			player.last_channel = channel
 		else:
 			player.send_message("Channel {0} not found".format(target_channel))
 	def handle_message(self, msg, player, target_channels=[], me=False):
 		for channel in target_channels:
 			if channel in self.channels:
-				if self.channels[channel].readonly and not player.admin:
+				if self.channels[channel].readonly and "ADMINISTRATOR" not in player.permissions:
 					player.send_message("You are not allowed to send messages to this channel.")
 				else: 
 					if me:
@@ -86,10 +88,20 @@ class ChatManager:
 		else:
 			player.send_message("Channel %s not found." % channel)
 	def get_channels(self):
-		s = "List of all channels:"
-		for channel in self.channels:
-			s += "" + channel.name
+		s = "List of all channels:\n"
+		for channel in self.channels.iteritems():
+			s += channel.get_display_name() + " - " + channel.topic + "\n"
 		return s
 	def remove_player_from_all_channels(self, player):
 		for id, channel in self.channels.iteritems():
 			channel.remove_player(player)
+	def clear_color(self, channel, player):
+		if channel in self.channels:
+			self.channels[channel].chat_color = ""
+		else:
+			player.send_message("Channel %s not found." % channel)
+	def add_color(self, channel, color, player):
+		if channel in self.channels:
+			self.channels[channel].chat_color += color
+		else:
+			player.send_message("Channel %s not found." % channel)
