@@ -19,6 +19,8 @@ class Player: # class for all connecting users.
 		self.last_channel = last_channel
 		self.client = client
 		self.name = "" # blank
+		self.description = "" #blank
+		self.race = "" #blank
 		self.status = 0 # login state
 		self.permissions = ["ALL"] # Permission flags
 		self.whois = "" #blank
@@ -85,6 +87,14 @@ def process(player):
 			return
 		else:
 			player.name = msg
+			player.client.send("Nice name!  I'm...uh, sorry to ask, but are you an earth pony?  Or a pegasus?  Or are you a unicorn?")
+			if msg not in ("earth pony", "pegasus", "unicorn"):
+                                player.client.send("I'm sorry, please try again.")
+                                return
+                        else:
+                                player.race = msg
+                                player.client.send("Great!  Now, would you mind describing yourself?")
+                                player.description = msg
 		if player.name == "Admin":
 			player.client.send("Hello Admin.  What is your password?\n")
 			player.status = 1
