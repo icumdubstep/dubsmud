@@ -85,7 +85,7 @@ def topic(player, args):
 		display_channel_topic(player, player.last_channel)
 	else:
 		if '@' in args:
-			if ' ' in arg
+			if ' ' in arg:
 				CHAT_CHANNEL[args[1:(args.index(' '))]].change_topic(player, args[:(args.index(' '))])
 			else:
 				display_channel_topic(player, args[1:])
