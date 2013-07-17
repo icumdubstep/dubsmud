@@ -2,11 +2,13 @@
 # dubsmud.py - Main program server loop
 #
 
+# Pre-Alpha
+
 #imports
 
 from miniboa import TelnetServer
 from dm_global import *
-import dm_commands, dm_utils
+import dm_commands, dm_utils, dm_chat
 
 
 # Length of time in seconds until an idle client is disconnected
@@ -59,8 +61,7 @@ class Player: # class for all connecting users.
 	def init_screen(self):
 		if self.ansi_ui_enabled:
 			self.client.send("\x1b[2J\n") # Clear the screen and add newline
-			self.send_message("Login Successful")
-		self.client.send("%s>" % self.name)	
+			self.send_message("Login Successful")	
 def process_clients():
 	"""
 	Check each client, if client.cmd_ready == True then there is a line of
@@ -90,16 +91,16 @@ def process(player):
 			player.client.password_mode_on()
 		else:
 			
-			CHAT_MANAGER.add_player_to_channel(player)
-			CHAT_MANAGER.add_player_to_channel(player, "default")
+			CHAT_CHANNELS["System"].add_player(player)
+			CHAT_CHANNELS["default"].add_player(player)
 			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
 			player.init_screen()
 	elif player.status == 1:
 		if msg == "Princess Celestia":
 			
-			CHAT_MANAGER.add_player_to_channel(player)
-			CHAT_MANAGER.add_player_to_channel(player, "default")
+			CHAT_CHANNELS["System"].add_player(player)
+			CHAT_CHANNELS["default"].add_player(player)
 			player.permissions.append("ADMINISTRATOR")
 			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
 			player.status = 2
@@ -121,7 +122,9 @@ def on_disconnect(client):
 	for player in PLAYER_LIST:
 		if player.client == client:
         		PLAYER_LIST.remove(player)
-			CHAT_MANAGER.remove_player_from_all_channels(player)
+			broadcast("{0} has left the server.".format(player.name))
+			for cn, channel in CHAT_CHANNELS.iteritems():
+				channel.remove_player(player)
 def on_connect(client):
 	"""
 	Handles new connections.
@@ -148,7 +151,6 @@ if __name__ == '__main__':
 	f = open('rules.txt', 'r')
 	RULES = f.read()
 	# Main thread of dubsmud
-
 	telnet_server = TelnetServer(
 		port=6380,
 		address='',
@@ -156,7 +158,7 @@ if __name__ == '__main__':
 		on_disconnect=on_disconnect,
 		timeout = .05
 		)
-    
+    	print(" ____      _                   _ \n|    \ _ _| |_ ___ _____ _ _ _| |\n|  |  | | | . |_ -|     | | | . |\n|____/|___|___|___|_|_|_|___|___|\n")
 	print(">> Listening for connections on port %d.  CTRL-C to break."
 		% telnet_server.port)
 

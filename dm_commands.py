@@ -5,13 +5,25 @@
 from dm_global import *
 import dm_utils
 import re
+import dm_chat
 
 #TODO: proper help topics read from file.
 
-HELP_TOPICS = {"": "TOPICS:\ncommands - To see a description of a command, type 'help <command>'"}
+HELP_TOPICS = {
+		"": "TOPICS:\n    commands - To see a description of a command, type 'help <command>'\n    formatting - For help on how to format messages.",
+		"formatting": "FORMATTING:\nTo activate a particular formatting, enter its character. The formatting will apply to all text entered after the character until the 'clear formatting' character (%)\n\nCharacters:\n    * - bold\n    _ - underline\n    # - invert colors\n    % - clear formatting"
+		}
 
 COMMANDS  = []
+# Misc Methods
+def display_channel_topic(player, channel):
+	if channel in CHAT_CHANNELS:
+		player.send_message("Topic for {0}: {1}".format((channel, CHAT_CHANNELS[channel].topic)))
+	else:
+		player.send_message("Channel {0} not found".format(target_channel))
 
+
+# Command methods
 def quit(player, args):
 	player.client.active = False
 
@@ -37,11 +49,16 @@ def ansiui(player, args):
 		player.send_message("ANSI UI enabled")
 def shutdown(player, args):
         raise dm_utils.ExitSignal(0)
-def addch(player, args):
+def addpubch(player, args):
 	if args == "":
 			player.send_message("Enter a name for your channel")
 	else:
-		CHAT_MANAGER.add_channel(args)
+		if ' ' in channel_name:
+			return "Channel name invalid"
+		elif channel_name in CHAT_CHANNELS:
+			return "Channel already open"
+		else:
+			CHAT_CHANNELS[channel_name] = dm_chat.ChatChannel( True, channel_name )
 		broadcast("New channel \"%s\" created." % args)
 def broadcast_cmd(player, args):
 	if args == "":
@@ -65,22 +82,26 @@ def chat(player, args):
 		handle_chat_command(player, args, False)
 def topic(player, args):
 	if args == "":
-		CHAT_MANAGER.display_topic(player, player.last_channel)
+		display_channel_topic(player, player.last_channel)
 	else:
 		if '@' in args:
-			if ' ' in args:
-				CHAT_MANAGER.change_topic(player, args[1:(args.index(' '))], args[:(args.index(' '))])
+			if ' ' in arg
+				CHAT_CHANNEL[args[1:(args.index(' '))]].change_topic(player, args[:(args.index(' '))])
 			else:
-				CHAT_MANAGER.display_topic(player, args[1:])
+				display_channel_topic(player, args[1:])
 		else:
-			CHAT_MANAGER.change_topic(player, player.last_channel, args)
+			change_channel_topic(player, player.last_channel, args)
 def me(player, args):
 	handle_chat_command(player, msg[2:], True)
 def join(player, args):
 	if args == "":
 		player.send_message("Enter a channel name")
 	else:
-		CHAT_MANAGER.add_player_to_channel(player, args)
+		for channel in args.split(' '):
+			if channel in CHAT_CHANNELS:
+				CHAT_CHANNELS[channel].add_player(player)
+			else:
+				player.send_message("Channel %s not found." % channel)
 def part(player, args):
 	if args == "":
 		player.send_message("Enter a channel name")
@@ -88,7 +109,13 @@ def part(player, args):
 		if args == "System":
 			player.send_message("Cannot disconnect from System.")
 		else:
-			CHAT_MANAGER.remove_player_from_channel(player, args)
+			for channel in args.split():
+				if channel in CHAT_CHANNELS:
+					if channel.remove_player(player):
+						del CHAT_CHANNELS[channel]
+						dm_global.broadcast("Channel %s is vacant, and now will be closed." % channel)
+				else:
+					player.send_message("Channel %s not found." % channel)
 def whois(player, args):
 	if args == "":
 		player.send_message("Enter a name\n")
@@ -119,7 +146,8 @@ def msg(player, args):
 		if not found:
 			player.send_message("User %s not found" % name)
 def listchannels(player, args):
-	player.send_message(CHAT_MANAGER.get_channels())
+	for ch, channel in CHAT_CHANNELS.iteritems():
+		player.send_message("{0} - {1}".format(ch, channel.topic))
 def commands(player, args):
 	player.send_message("Available Commands:")
 	for cmd_name, cmd in COMMANDS.iteritems():
@@ -141,9 +169,40 @@ def chatcolor(player, args):
 	for arg in args_list:
 		if arg[0] == '@':
 			current_channel = arg[1:]
-			CHAT_MANAGER.clear_color(current_channel, player)
+			if channel in CHAT_CHANNELS:
+				CHAT_CHANNELS[channel].chat_color = ""
+			else:
+				player.send_message("Channel %s not found." % channel)
 		elif arg in COLORS:
-			CHAT_MANAGER.add_color(current_channel, COLORS[arg], player)
+			if arg in COLORS:
+				if channel in CHAT_CHANNELS:
+					CHAT_CHANNELS[channel].chat_color += COLORS[arg]
+				else:
+					player.send_message("Channel %s not found." % channel)
+			else:
+				player.send_message("Color {0} not found.".format(arg))
+def showcolors(player, args):
+	for color, code in COLORS.iteritems():
+		player.send_message("{0}Text\x1b[0m - {1}".format(code, color))
+def invite(player, args):
+	target_channels = []
+	if args == "":
+		player.send_message("What users do you want to invite?")
+	else:
+		for arg in args.split(' '):
+			if arg[0] == '@':
+				player.last_channel = arg[1:]
+				target_channels.append(arg)
+			else:
+				found = False
+				for target_player in PLAYER_LIST:
+					if target_player.name == arg:
+						CHAT_MANAGER.invite(target_player, target_channels)
+						found = True
+				if not found:
+					player.send_message("Player {0} not found.".format(arg))
+				
+
 #
 # parse_command - called by dubsmud.py to process whatever command the user puts in.
 #
@@ -193,8 +252,18 @@ def handle_chat_command(player, msg, me=False):
 		chat_message = msg
 	# Clean up whitespace
 	chat_message = chat_message.strip()
-	CHAT_MANAGER.handle_message(chat_message, player, target_channels, me)
-
+	for channel in target_channels:
+		if channel in CHAT_CHANNELS:
+			if CHAT_CHANNELS[channel].readonly and "ADMINISTRATOR" not in player.permissions:
+				player.send_message("You are not allowed to send messages to this channel.")
+			else: 
+				if me:
+					CHAT_CHANNELS[channel].broadcast("*%s %s" % (player.name, chat_message))
+				else:
+					CHAT_CHANNELS[channel].broadcast("%s : %s" % (player.name, chat_message))
+				player.last_channel = channel
+		else:
+			return "Channel {0} not found".format(channel)
 
 #
 # Dictionary conatining all user methods + descriptions + permission levels indexed by their commands
@@ -202,24 +271,24 @@ def handle_chat_command(player, msg, me=False):
 
 COMMANDS = { 
 		'quit': (quit, "Quits. Disconnects from server.", ["ALL"]),
-		'nick': (nick, "Nickname command. Use to change your handle.\nUsage: 'nick <new name>'", ["ALL"]),
-		'iam': (iam, "Use to change your whois information, or what people will see when they type in \"whois <yourname>\"\nUsage: 'iam <new description>'", ["ALL"]),
-		'ansiui': (ansiui, "", ["ALL"]),
-		'shutdown': (shutdown, "", ["ADMINISTRATOR"]),
-		'addch': (addch, "", ["ADMINISTRATOR", "MODERATOR"]),
-		'broadcast': (broadcast_cmd, "", ["ADMINISTRATOR"]),
-		'chatcolor': (chatcolor, "", ["ADMINISTRATOR", "MODERATOR"]),
-		'ircmode': (ircmode, "", ["ALL"]),
-		'chat': (chat, "Chat command. Use to talk to other players through the chat channels.\nUsage: 'chat [channels] <message>'\nIf no channels are specified, then the last channel that the player used will recieve the message.\nIn order to specify a channel, enter in the name of the channel preceded by '@'", ["ALL"]),
-		'topic': (topic, "", ["ALL"]),
-		'me': (me, "Use to denote actions that you take in chat.\nUsage: 'me [channels] <message>'\nIf no channels are specified, then the last channel that the player used will recieve the message.\nIn order to specify a channel, enter in the name of the channel preceded by '@'", ["ALL"]),
-		'join': (join, "", ["ALL"]),
-		'part': (part, "", ["ALL"]),
-		'whois': (whois, "", ["ALL"]),
-		'msg': (msg, "Message command. Use to message other players privately. \nUsage: 'msg <name> <message>'", ["ALL"]),
-		'listchannels': (listchannels, "", ["ALL"]),
-		'commands': (commands, "", ["ALL"]),
-		'rules': (rules, "", ["ALL"]),
-		'help': (help, "", ["ALL"])
-		
+		'nick': (nick, "Nickname command. Use to change your handle.\n\n    Usage: 'nick <new name>'", ["ALL"]),
+		'iam': (iam, "Use to change your whois information, or what people will see when they type in \"whois <yourname>\"\n\n    Usage: 'iam <new description>'", ["ALL"]),
+		'ansiui': (ansiui, "Toggles experimental ANSI UI. Use at your own risk, not widely supported on MUD clients. Recommended for xterm users. If you don't know what xterm is, this probably is something you should stay away from.", ["ALL"]),
+		'shutdown': (shutdown, "Shuts down the MUD. Admin Only", ["ADMINISTRATOR"]),
+		'addpubch': (addpubch, "Adds a public chat channel. Only available to moderators and admins", ["ADMINISTRATOR", "MODERATOR"]),
+		'broadcast': (broadcast_cmd, "Broadcasts a message to everyone connected to the server. Admin-Only.", ["ADMINISTRATOR"]),
+		'chatcolor': (chatcolor, "Changes the color of a public chat channel. Admin/Mod Only", ["ADMINISTRATOR", "MODERATOR"]),
+		'ircmode': (ircmode, "Puts your client in irc mode. All commands are preceded with a '/'. Any command not preceded with a slash will be piped as an argument into the 'chat' command.", ["ALL"]),
+		'chat': (chat, "Chat command. Use to talk to other players through the chat channels.\n\n    Usage: 'chat [channels] <message>'\n\nIf no channels are specified, then the last channel that the player used will recieve the message.\nIn order to specify a channel, enter in the name of the channel preceded by '@'", ["ALL"]),
+		'topic': (topic, "Changes the topic of a public chat channel. Mod/Admin Only", ["ADMINISTRATOR", "MODERATOR"]),
+		'me': (me, "Use to denote actions that you take in chat.\n\n    Usage: 'me [channels] <message>'\nIf no channels are specified, then the last channel that the player used will recieve the message.\nIn order to specify a channel, enter in the name of the channel preceded by '@'", ["ALL"]),
+		'join': (join, "Join a channel with this command ", ["ALL"]),
+		'part': (part, "Leave a channel with this command", ["ALL"]),
+		'whois': (whois, "See another user's description", ["ALL"]),
+		'msg': (msg, "Message command. Use to message other players privately. \n\n    Usage: 'msg <name> <message>'", ["ALL"]),
+		'listchannels': (listchannels, "List all the channels and their topics.", ["ALL"]),
+		'commands': (commands, "Displays a list of all commands", ["ALL"]),
+		'rules': (rules, "Displays the rules", ["ALL"]),
+		'help': (help, "Provides help on a variety of topics.", ["ALL"]),
+		'showcolors': (showcolors, "Tests all the colors of the ANSI rainbow.", ["ALL"])
 	   }
