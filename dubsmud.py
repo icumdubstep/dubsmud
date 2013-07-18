@@ -82,30 +82,20 @@ def process(player):
 	# These statuses are good to use for initial profile creation and login.
 	if player.status == 0:
 		if ' ' in msg:
-			player.client.send("Invalid name. No spaces allowed. Try again.")
+			player.send_message("Invalid name. No spaces allowed. Try again.")
 			player.status = 0
 			return
 		else:
 			player.name = msg
-			player.client.send("Nice name!  I'm...uh, sorry to ask, but are you an earth pony?  Or a pegasus?  Or are you a unicorn?")
-			if msg not in ("earth pony", "pegasus", "unicorn"):
-                                player.client.send("I'm sorry, please try again.")
-                                return
-                        else:
-                                player.race = msg
-                                player.client.send("Great!  Now, would you mind describing yourself?")
-                                player.description = msg
+			
 		if player.name == "Admin":
-			player.client.send("Hello Admin.  What is your password?\n")
+			player.send_message("Hello Admin.  What is your password?\n")
 			player.status = 1
 			player.client.password_mode_on()
 		else:
-			
-			CHAT_CHANNELS["System"].add_player(player)
-			CHAT_CHANNELS["default"].add_player(player)
-			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
-			player.status = 2
-			player.init_screen()
+			player.send_message("Nice name!  I'm...uh, sorry to ask, but are you an earth pony?  Or a pegasus? Or are you a unicorn?")
+			player.status = 3
+
 	elif player.status == 1:
 		if msg == "Princess Celestia":
 			
@@ -117,9 +107,29 @@ def process(player):
 			player.init_screen()
 			
 		else:
-			player.client.send("Access Denied. Try again.")
+			player.send_message("Access Denied. Try again.")
 			player.status = 0
 		player.client.password_mode_off()
+	elif player.status == 3:
+                if msg not in ("earth pony", "pegasus", "unicorn"):
+                        player.send_message("I'm sorry, please try again.")
+                        return
+                else:
+                        player.race = msg
+                        player.send_message("Great!  Now, would you mind describing yourself?\n  What do you look like?  How would a friend describe your nature?")
+                        player.status = 4
+                                
+        elif player.status == 4:
+                player.description = msg
+                player.status = 5
+                
+        elif player.status == 5:
+                player.send_message("Awesome!  Thanks for putting up with my Luna-damned curiosity, by the way!")
+                CHAT_CHANNELS["System"].add_player(player)
+		CHAT_CHANNELS["default"].add_player(player)
+		player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
+		player.status = 2
+		player.init_screen()
 	else:
 		dm_commands.parse_command(player, msg)
 	
