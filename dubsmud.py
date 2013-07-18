@@ -9,6 +9,7 @@
 from miniboa import TelnetServer
 from dm_global import *
 import dm_commands, dm_utils, dm_chat
+import cPickle as pickle
 
 
 # Length of time in seconds until an idle client is disconnected
@@ -155,6 +156,16 @@ def on_connect(client):
 	client.send("Welcome to the DubsMud BBS! \n\n")
 	client.send("What is your name? ")
 
+def collect_players():
+        """
+        Goes through the PLAYER_LIST and adds each Player to an array of Players
+        """
+        PLAYER_BOX = ""
+        for player in PLAYER_LIST:
+                if player.client.active:
+                        PLAYER_BOX.append(player)
+        pickle.dump( PLAYER_BOX, open( "players.p", "wb" ) )
+
 def kick_idle():
 	"""
 	Looks for idle clients and disconnects them by setting active to False.
@@ -187,6 +198,7 @@ if __name__ == '__main__':
 		try:
 			telnet_server.poll()        ## Send, Recv, and look for new connections
 			kick_idle()                 ## Check for idle clients
+			#collect_players()           ## Add to a list of players to stream to a file
 			process_clients()           ## Check for client input
 		except dm_utils.ExitSignal as e:
 			print e
