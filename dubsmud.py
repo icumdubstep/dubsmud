@@ -9,7 +9,7 @@
 from miniboa import TelnetServer
 from dm_global import *
 
-import dm_commands, dm_utils, dm_chat, dm_player
+import dm_commands, dm_utils, dm_chat, dm_player, dm_game
 import cPickle as pickle
 
 
@@ -67,6 +67,7 @@ def process(player):
 			CHAT_CHANNELS["default"].add_player(player)
 			player.permissions.append("ADMINISTRATOR")
 			player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
+			dm_game.on_connect(player)
 			player.status = 2
 			player.init_screen()
 			
@@ -89,6 +90,7 @@ def process(player):
                 CHAT_CHANNELS["System"].add_player(player)
 		CHAT_CHANNELS["default"].add_player(player)
 		player.send_message("Welcome to the game!\nType in 'commands' for a list of available commands.")
+		dm_game.on_connect(player)
 		player.status = 2
 		player.init_screen()
 	else:
@@ -106,16 +108,18 @@ def on_disconnect(client):
 			broadcast("{0} has left the server.".format(player.name))
 			for cn, channel in CHAT_CHANNELS.iteritems():
 				channel.remove_player(player)
+			dm_game.on_disconnect(player)
 def on_connect(client):
 	"""
 	Handles new connections.
 	"""
 	print "++ Opened connection to %s" % client.addrport()
-	player = Player(client)
-	PLAYER_LIST.append( Player(client) )
+	player = dm_player.Player(client)
+	PLAYER_LIST.append( player )
+	
 	client.send("Welcome to the DubsMud BBS! \n\n")
 	client.send("What is your name? ")
-
+	
 def collect_players():
         """
         Goes through the PLAYER_LIST and adds each Player to an array of Players
@@ -150,6 +154,7 @@ if __name__ == '__main__':
 		timeout = .05
 		)
     	print(" ____      _                   _ \n|    \ _ _| |_ ___ _____ _ _ _| |\n|  |  | | | . |_ -|     | | | . |\n|____/|___|___|___|_|_|_|___|___|\n")
+	print("Dubsmud Version 0.1.0 'Boo' (alpha)\n"
 	print(">> Listening for connections on port %d.  CTRL-C to break."
 		% telnet_server.port)
 

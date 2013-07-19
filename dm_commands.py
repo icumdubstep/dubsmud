@@ -5,7 +5,7 @@
 from dm_global import *
 import dm_utils
 import re
-import dm_chat
+import dm_chat, dm_game
 
 #TODO: proper help topics read from file.
 
@@ -152,7 +152,10 @@ def commands(player, args):
 	player.send_message("Available Commands:")
 	for cmd_name, cmd in COMMANDS.iteritems():
 		if set(COMMANDS[cmd_name][2]).intersection( set(player.permissions) ):
-			player.send_message("{0}".format(cmd_name))
+			player.send_message(cmd_name)
+	for cmd_name, cmd in dm_game.COMMANDS.iteritems():
+		if set(dm_game.COMMANDS[cmd_name][2]).intersection( set(player.permissions) ):
+			player.send_message(cmd_name)
 	player.send_message("\nCommands are not case-sensitive\nStarred commands are admin-only\nTo recieve more detailed information about a command, type in \"help\" and the command. For example: \"help chat\"")
 def rules(player, args):
 	player.send_message(RULES)
@@ -228,6 +231,11 @@ def parse_command(player, msg):
         if cmd in COMMANDS:
 		if set(COMMANDS[cmd][2]).intersection( set(player.permissions) ):
 			COMMANDS[cmd][0](player, args)
+		else:
+			player.send_message("You don't have permission to do that.")
+	elif cmd in dm_game.COMMANDS:
+		if set(dm_game.COMMANDS[cmd][2]).intersection( set(player.permissions) ):
+			dm_game.COMMANDS[cmd][0](player, args)
 		else:
 			player.send_message("You don't have permission to do that.")
 	# If all else fails....

@@ -28,6 +28,8 @@ COLORS = {
 CHAT_CHANNELS = {"System": dm_chat.ChatChannel(False), "default": dm_chat.ChatChannel(False, "default")}
 CHAT_CHANNELS["System"].readonly = True
 CLEAR_FORMATTING = "\x1b[0m"
+NEXT_EXIT_ID = 0
+NEXT_ROOM_ID = 0
 # List of all connecting players
 PLAYER_LIST = []
 # The managing object for all chat.

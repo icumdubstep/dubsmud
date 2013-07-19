@@ -2,6 +2,7 @@
 # dm_player.py - contains the player class
 #
 
+
 class Player: # class for all connecting users.
 	def __init__(self, client, last_channel = "default"):
 		self.last_channel = last_channel
@@ -16,6 +17,7 @@ class Player: # class for all connecting users.
 		self.messages = []
 		self.ansi_ui_enabled = False # Flag for the experimental ANSI UI
 		self.ansi_color_enabled = True # ANSI colors. Works with pretty much every client, but can be disabled by the user.
+		self.room = 'Spawn'
 		
 	# With one exception, this is all you are going to use to send messages to the player.
 	def send_message(self, msg):
