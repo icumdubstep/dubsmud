@@ -8,7 +8,7 @@
 
 from miniboa import TelnetServer
 from dm_global import *
-import dm_commands, dm_utils, dm_chat
+import dm_commands, dm_utils, dm_chat, dm_game
 
 
 # Length of time in seconds until an idle client is disconnected
@@ -28,7 +28,7 @@ class Player: # class for all connecting users.
 		self.messages = []
 		self.ansi_ui_enabled = False # Flag for the experimental ANSI UI
 		self.ansi_color_enabled = True # ANSI colors. Works with pretty much every client, but can be disabled by the user.
-		
+		self.avatar = dm_game.Avatar(player)
 	# With one exception, this is all you are going to use to send messages to the player.
 	def send_message(self, msg):
 		if not self.ansi_ui_enabled:
