@@ -92,7 +92,7 @@ def topic(player, args):
 		else:
 			change_channel_topic(player, player.last_channel, args)
 def me(player, args):
-	handle_chat_command(player, msg[2:], True)
+	handle_chat_command(player, args, True)
 def join(player, args):
 	if args == "":
 		player.send_message("Enter a channel name")

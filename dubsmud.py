@@ -154,7 +154,7 @@ if __name__ == '__main__':
 		timeout = .05
 		)
     	print(" ____      _                   _ \n|    \ _ _| |_ ___ _____ _ _ _| |\n|  |  | | | . |_ -|     | | | . |\n|____/|___|___|___|_|_|_|___|___|\n")
-	print("Dubsmud Version 0.1.0 'Boo' (alpha)\n"
+	print("Dubsmud Version 0.1.0 'Boo' (alpha)\n")
 	print(">> Listening for connections on port %d.  CTRL-C to break."
 		% telnet_server.port)
 
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 	while True:
 		try:
 			telnet_server.poll()        ## Send, Recv, and look for new connections
-			kick_idle()                 ## Check for idle clients
+			#kick_idle()                 ## Check for idle clients
 			#collect_players()           ## Add to a list of players to stream to a file
 			process_clients()           ## Check for client input
 		except dm_utils.ExitSignal as e:
