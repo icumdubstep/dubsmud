@@ -111,7 +111,7 @@ def part(player, args):
 		else:
 			for channel in args.split():
 				if channel in CHAT_CHANNELS:
-					if channel.remove_player(player):
+					if CHAT_CHANNELS[channel].remove_player(player):
 						del CHAT_CHANNELS[channel]
 						dm_global.broadcast("Channel %s is vacant, and now will be closed." % channel)
 				else:
