@@ -53,12 +53,12 @@ def addpubch(player, args):
 	if args == "":
 			player.send_message("Enter a name for your channel")
 	else:
-		if ' ' in channel_name:
+		if ' ' in args:
 			return "Channel name invalid"
-		elif channel_name in CHAT_CHANNELS:
+		elif args in CHAT_CHANNELS:
 			return "Channel already open"
 		else:
-			CHAT_CHANNELS[channel_name] = dm_chat.ChatChannel( True, channel_name )
+			CHAT_CHANNELS[args] = dm_chat.ChatChannel( True, args )
 		broadcast("New channel \"%s\" created." % args)
 def broadcast_cmd(player, args):
 	if args == "":
